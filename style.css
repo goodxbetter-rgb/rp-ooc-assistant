@@ -1,3 +1,4 @@
+
 /* ===== RP OOC Assistant: Floating Window ===== */
 
 .ooca-launcher,
@@ -7,43 +8,66 @@
     font-family: 'Mali', sans-serif;
 }
 
+/* Floating Launcher */
+
 .ooca-launcher {
     position: fixed;
     right: 22px;
     bottom: 100px;
     z-index: 99990;
+
     width: 52px;
     height: 52px;
     padding: 0;
+
     border: 1px solid #D6BD8A;
     border-radius: 50%;
+
     background: #202329;
     color: #D6BD8A;
-    font-size: 13px;
+
+    font-size: 17px;
     font-weight: 600;
-    cursor: pointer;
+
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+
     box-shadow: 0 3px 14px rgb(0 0 0 / 35%);
-    transition: background .2s ease, transform .2s ease;
+
+    transition: background .2s ease;
 }
 
 .ooca-launcher:hover {
     background: #30343D;
-    transform: scale(1.05);
 }
+
+.ooca-launcher:active {
+    cursor: grabbing;
+}
+
+/* Main Window */
 
 .ooca-panel {
     display: none;
+
     position: fixed;
     z-index: 99999;
+
     width: 370px;
     max-width: calc(100vw - 24px);
     max-height: calc(100dvh - 24px);
+
     flex-direction: column;
     overflow: hidden;
+
     background: #191B20;
     color: #D9DDE5;
+
     border: 1px solid #555D69;
     border-radius: 13px;
+
     box-shadow: 0 8px 32px rgb(0 0 0 / 45%);
 }
 
@@ -60,14 +84,19 @@
     display: none;
 }
 
+/* Header */
+
 .ooca-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+
     padding: 12px 14px;
+
     background: #24272E;
     border-bottom: 1px solid #343943;
+
     cursor: grab;
     user-select: none;
     touch-action: none;
@@ -103,10 +132,13 @@
     width: 28px;
     height: 28px;
     padding: 0;
+
     border: none;
     border-radius: 6px;
+
     background: #343943;
     color: #D9DDE5;
+
     font-size: 17px;
     cursor: pointer;
 }
@@ -115,11 +147,15 @@
     background: #4A505C;
 }
 
+/* Body */
+
 .ooca-body {
     display: flex;
     flex-direction: column;
     gap: 10px;
+
     padding: 14px;
+
     overflow-y: auto;
     overscroll-behavior: contain;
 }
@@ -137,16 +173,23 @@
     font-weight: 600;
 }
 
+/* Question Input */
+
 .ooca-input {
     width: 100%;
     min-height: 96px;
+
     resize: vertical;
+
     padding: 10px 12px;
+
     border: 1px solid #343943;
     border-radius: 8px;
     outline: none;
+
     background: #202329;
     color: #E1E4EA;
+
     font-size: 13px;
     line-height: 1.7;
 }
@@ -165,19 +208,25 @@
     line-height: 1.5;
 }
 
+/* Buttons */
+
 .ooca-primary-button,
 .ooca-secondary-button {
     padding: 7px 12px;
+
     border: 1px solid #343943;
     border-radius: 7px;
+
     font-size: 12px;
     cursor: pointer;
 }
 
 .ooca-primary-button {
     align-self: flex-end;
+
     background: #D6BD8A;
     border-color: #D6BD8A;
+
     color: #25221C;
     font-weight: 600;
 }
@@ -192,17 +241,25 @@
     color: #C4C9D2;
 }
 
+/* Answer */
+
 .ooca-answer-output {
     min-height: 100px;
     max-height: min(42dvh, 360px);
+
     padding: 11px 12px;
+
     overflow-y: auto;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+
     background: #202329;
+
     border: 1px solid #343943;
     border-radius: 8px;
+
     color: #D9DDE5;
+
     font-size: 13px;
     line-height: 1.8;
 }
@@ -214,16 +271,21 @@
     gap: 7px;
 }
 
+/* Scrollbar */
+
 .ooca-body,
 .ooca-answer-output {
     scrollbar-width: thin;
     scrollbar-color: #555D69 transparent;
 }
 
+/* Responsive */
+
 @media (max-width: 600px) {
     .ooca-launcher {
         right: 14px;
         bottom: 85px;
+
         width: 46px;
         height: 46px;
     }
@@ -231,6 +293,7 @@
     .ooca-panel {
         width: min(370px, calc(100vw - 20px));
         max-height: calc(100dvh - 20px);
+
         border-radius: 11px;
     }
 
