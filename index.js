@@ -1,29 +1,27 @@
+
 import { getContext } from "../../../extensions.js";
 
 const EXTENSION_ID = "rp-ooc-assistant";
 const POSITION_KEY = `${EXTENSION_ID}-position`;
+const LAUNCHER_POSITION_KEY = `${EXTENSION_ID}-launcher-position`;
 
 const OOC_PROMPT = (question) => `
 You are an assistant for the user's ongoing roleplay.
 
 Answer the user's question about the current story using the available chat context.
-The user may ask about characters, NPCs, relationships, objects, events, locations,
-worldbuilding, or details they may have forgotten or found confusing.
 
 USER QUESTION:
 ${question}
 
 RULES:
-- Answer the question directly and clearly.
-- Prioritize facts established in the current roleplay context.
-- Do not invent facts and present them as established information.
-- If the context does not contain the answer, say that it is not established or not clear.
-- You may distinguish confirmed facts from reasonable interpretation when useful.
+- Answer directly using established facts from the current roleplay.
+- Do not invent facts.
+- If information is unclear or absent, say so.
 - Do not continue the roleplay scene.
 - Do not write dialogue, actions, thoughts, or feelings for {{user}}.
 - Do not send anything to the main chat.
-- Answer in Thai unless the user asks for another language.
-- Keep the answer focused; provide enough detail to resolve the user's question.
+- Answer in Thai unless requested otherwise.
+- Keep the answer focused.
 `;
 
 let launcher;
@@ -37,6 +35,7 @@ let regenerateButton;
 let askAgainButton;
 let isGenerating = false;
 let lastQuestion = "";
+let launcherDragged = false;
 
 function el(tag, className, text) {
     const node = document.createElement(tag);
@@ -45,34 +44,42 @@ function el(tag, className, text) {
     return node;
 }
 
-function getSavedPosition() {
+function readPosition(key) {
     try {
-        const value = JSON.parse(localStorage.getItem(POSITION_KEY));
-        if (value && Number.isFinite(value.left) && Number.isFinite(value.top)) {
+        const value = JSON.parse(localStorage.getItem(key));
+
+        if (
+            value &&
+            Number.isFinite(value.left) &&
+            Number.isFinite(value.top)
+        ) {
             return value;
         }
-    } catch {
-        // Ignore invalid saved position.
-    }
+    } catch {}
+
     return null;
 }
 
-function clampPosition(left, top) {
+function clampPosition(left, top, element) {
     const margin = 8;
-    const rect = panel.getBoundingClientRect();
+    const rect = element.getBoundingClientRect();
 
     return {
-        left: Math.max(margin, Math.min(left, window.innerWidth - rect.width - margin)),
-        top: Math.max(margin, Math.min(top, window.innerHeight - rect.height - margin)),
+        left: Math.max(
+            margin,
+            Math.min(left, window.innerWidth - rect.width - margin)
+        ),
+        top: Math.max(
+            margin,
+            Math.min(top, window.innerHeight - rect.height - margin)
+        ),
     };
 }
 
-function savePosition() {
-    if (!panel) return;
+function savePosition(element, key) {
+    const rect = element.getBoundingClientRect();
 
-    const rect = panel.getBoundingClientRect();
-
-    localStorage.setItem(POSITION_KEY, JSON.stringify({
+    localStorage.setItem(key, JSON.stringify({
         left: rect.left,
         top: rect.top,
     }));
@@ -81,18 +88,31 @@ function savePosition() {
 function placePanel() {
     panel.style.transform = "none";
 
-    const saved = getSavedPosition();
+    const saved = readPosition(POSITION_KEY);
 
     if (saved) {
-        const position = clampPosition(saved.left, saved.top);
+        const pos = clampPosition(saved.left, saved.top, panel);
 
-        panel.style.left = `${position.left}px`;
-        panel.style.top = `${position.top}px`;
+        panel.style.left = `${pos.left}px`;
+        panel.style.top = `${pos.top}px`;
     } else {
         const rect = panel.getBoundingClientRect();
 
         panel.style.left = `${Math.max(8, (window.innerWidth - rect.width) / 2)}px`;
         panel.style.top = `${Math.max(8, (window.innerHeight - rect.height) / 2)}px`;
+    }
+}
+
+function placeLauncher() {
+    const saved = readPosition(LAUNCHER_POSITION_KEY);
+
+    if (saved) {
+        const pos = clampPosition(saved.left, saved.top, launcher);
+
+        launcher.style.left = `${pos.left}px`;
+        launcher.style.top = `${pos.top}px`;
+        launcher.style.right = "auto";
+        launcher.style.bottom = "auto";
     }
 }
 
@@ -179,22 +199,18 @@ async function askAssistant(question) {
     }
 }
 
-function makeDraggable(handle) {
+function makeDraggable(element, storageKey, isLauncher = false) {
     let activePointer = null;
     let startX = 0;
     let startY = 0;
     let originLeft = 0;
     let originTop = 0;
+    let moved = false;
 
-    handle.addEventListener("pointerdown", (event) => {
-        if (event.target.closest("button")) return;
+    element.addEventListener("pointerdown", (event) => {
         if (event.pointerType === "mouse" && event.button !== 0) return;
 
-        const rect = panel.getBoundingClientRect();
-
-        panel.style.transform = "none";
-        panel.style.left = `${rect.left}px`;
-        panel.style.top = `${rect.top}px`;
+        const rect = element.getBoundingClientRect();
 
         activePointer = event.pointerId;
 
@@ -204,21 +220,36 @@ function makeDraggable(handle) {
         originLeft = rect.left;
         originTop = rect.top;
 
-        handle.setPointerCapture(event.pointerId);
+        moved = false;
+
+        element.setPointerCapture(event.pointerId);
 
         event.preventDefault();
     });
 
-    handle.addEventListener("pointermove", (event) => {
+    element.addEventListener("pointermove", (event) => {
         if (activePointer !== event.pointerId) return;
 
-        const position = clampPosition(
-            originLeft + event.clientX - startX,
-            originTop + event.clientY - startY,
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+            moved = true;
+        }
+
+        if (!moved) return;
+
+        const pos = clampPosition(
+            originLeft + dx,
+            originTop + dy,
+            element
         );
 
-        panel.style.left = `${position.left}px`;
-        panel.style.top = `${position.top}px`;
+        element.style.left = `${pos.left}px`;
+        element.style.top = `${pos.top}px`;
+        element.style.right = "auto";
+        element.style.bottom = "auto";
+        element.style.transform = "none";
     });
 
     const stop = (event) => {
@@ -226,21 +257,27 @@ function makeDraggable(handle) {
 
         activePointer = null;
 
-        savePosition();
+        if (moved) {
+            savePosition(element, storageKey);
+
+            if (isLauncher) {
+                launcherDragged = true;
+            }
+        }
     };
 
-    handle.addEventListener("pointerup", stop);
-    handle.addEventListener("pointercancel", stop);
+    element.addEventListener("pointerup", stop);
+    element.addEventListener("pointercancel", stop);
 }
 
 function createUI() {
     if (document.getElementById(`${EXTENSION_ID}-launcher`)) return;
 
-    launcher = el("button", "ooca-launcher", "OOC");
+    launcher = el("button", "ooca-launcher", "🤨??");
 
     launcher.id = `${EXTENSION_ID}-launcher`;
     launcher.type = "button";
-    launcher.title = "เปิด RP OOC Assistant";
+    launcher.title = "ลากเพื่อย้ายตำแหน่ง หรือกดเพื่อเปิดผู้ช่วย";
     launcher.setAttribute("aria-label", "เปิด RP OOC Assistant");
 
     panel = el("section", "ooca-panel");
@@ -254,23 +291,20 @@ function createUI() {
 
     titleGroup.append(
         el("div", "ooca-title", "RP OOC Assistant"),
-        el("div", "ooca-subtitle", "ผู้ช่วยตอบคำถามเกี่ยวกับเนื้อเรื่อง"),
+        el("div", "ooca-subtitle", "ผู้ช่วยตอบคำถามเกี่ยวกับเนื้อเรื่อง")
     );
 
     const headerButtons = el("div", "ooca-header-buttons");
 
     const minimizeButton = el("button", "ooca-icon-button", "—");
-
     minimizeButton.type = "button";
     minimizeButton.title = "ย่อหน้าต่าง";
 
     const closeButton = el("button", "ooca-icon-button", "×");
-
     closeButton.type = "button";
     closeButton.title = "ปิดหน้าต่าง";
 
     headerButtons.append(minimizeButton, closeButton);
-
     header.append(titleGroup, headerButtons);
 
     const body = el("div", "ooca-body");
@@ -280,7 +314,6 @@ function createUI() {
     const questionLabel = el("label", "ooca-label", "ถามเกี่ยวกับเนื้อเรื่อง");
 
     questionInput = el("textarea", "ooca-input");
-
     questionInput.rows = 4;
     questionInput.placeholder = "เช่น แมวสีดำที่ปรากฏในฉากเป็นแมวของใคร?";
 
@@ -291,7 +324,6 @@ function createUI() {
     );
 
     submitButton = el("button", "ooca-primary-button", "ถามผู้ช่วย");
-
     submitButton.type = "button";
 
     questionView.append(
@@ -306,21 +338,17 @@ function createUI() {
     const answerLabel = el("div", "ooca-label", "คำตอบ");
 
     answerOutput = el("div", "ooca-answer-output");
-
     answerOutput.setAttribute("aria-live", "polite");
 
     const answerActions = el("div", "ooca-answer-actions");
 
     const copyButton = el("button", "ooca-secondary-button", "คัดลอก");
-
     copyButton.type = "button";
 
     regenerateButton = el("button", "ooca-primary-button", "สร้างใหม่");
-
     regenerateButton.type = "button";
 
     askAgainButton = el("button", "ooca-secondary-button", "ถามคำถามใหม่");
-
     askAgainButton.type = "button";
 
     answerActions.append(
@@ -342,6 +370,11 @@ function createUI() {
     document.body.append(launcher, panel);
 
     launcher.addEventListener("click", () => {
+        if (launcherDragged) {
+            launcherDragged = false;
+            return;
+        }
+
         const opening = !panel.classList.contains("ooca-visible");
 
         panel.classList.toggle("ooca-visible", opening);
@@ -415,7 +448,10 @@ function createUI() {
         }
     });
 
-    makeDraggable(header);
+    makeDraggable(launcher, LAUNCHER_POSITION_KEY, true);
+    makeDraggable(header, POSITION_KEY);
+
+    placeLauncher();
 
     showQuestionView();
 
@@ -433,13 +469,30 @@ if (document.readyState === "loading") {
 }
 
 window.addEventListener("resize", () => {
-    if (!panel || !panel.classList.contains("ooca-visible")) return;
+    if (launcher) {
+        const rect = launcher.getBoundingClientRect();
 
-    const rect = panel.getBoundingClientRect();
+        const pos = clampPosition(
+            rect.left,
+            rect.top,
+            launcher
+        );
 
-    const position = clampPosition(rect.left, rect.top);
+        launcher.style.left = `${pos.left}px`;
+        launcher.style.top = `${pos.top}px`;
+    }
 
-    panel.style.transform = "none";
-    panel.style.left = `${position.left}px`;
-    panel.style.top = `${position.top}px`;
+    if (panel && panel.classList.contains("ooca-visible")) {
+        const rect = panel.getBoundingClientRect();
+
+        const pos = clampPosition(
+            rect.left,
+            rect.top,
+            panel
+        );
+
+        panel.style.transform = "none";
+        panel.style.left = `${pos.left}px`;
+        panel.style.top = `${pos.top}px`;
+    }
 });
