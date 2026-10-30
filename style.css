@@ -1,44 +1,259 @@
-.ui-enhancements-toolbar {
+/* ===== RP OOC Assistant: Floating Window ===== */
+
+.ooca-launcher,
+.ooca-panel,
+.ooca-panel * {
+    box-sizing: border-box;
+    font-family: 'Mali', sans-serif;
+}
+
+.ooca-launcher {
+    position: fixed;
+    right: 22px;
+    bottom: 100px;
+    z-index: 99990;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border: 1px solid #D6BD8A;
+    border-radius: 50%;
+    background: #202329;
+    color: #D6BD8A;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 3px 14px rgb(0 0 0 / 35%);
+    transition: background .2s ease, transform .2s ease;
+}
+
+.ooca-launcher:hover {
+    background: #30343D;
+    transform: scale(1.05);
+}
+
+.ooca-panel {
+    display: none;
+    position: fixed;
+    z-index: 99999;
+    width: 370px;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    flex-direction: column;
+    overflow: hidden;
+    background: #191B20;
+    color: #D9DDE5;
+    border: 1px solid #555D69;
+    border-radius: 13px;
+    box-shadow: 0 8px 32px rgb(0 0 0 / 45%);
+}
+
+.ooca-panel.ooca-visible {
+    display: flex;
+}
+
+.ooca-panel.ooca-minimized {
+    width: 270px;
+    max-height: none;
+}
+
+.ooca-panel.ooca-minimized .ooca-body {
+    display: none;
+}
+
+.ooca-header {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    width: fit-content;
-    max-width: 100%;
-    margin: 6px 0;
-    padding: 6px 9px;
-    border: 1px solid var(-- SmartThemeBorderColor, rgba(150, 150, 150, 0.35));
-    border-radius: 9px;
-    background: var(--SmartThemeBlurTintColor, rgba(30, 30, 30, 0.82));
-    color: var(--SmartThemeBodyColor, inherit);
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #24272E;
+    border-bottom: 1px solid #343943;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
 }
 
-.ui-enhancements-toolbar-label {
-    margin-right: 3px;
-    font-size: 0.82em;
-    opacity: 0.72;
+.ooca-header:active {
+    cursor: grabbing;
 }
 
-.ui-enhancements-button {
-    min-width: 34px;
-    padding: 5px 10px;
-    border: 1px solid var(--SmartThemeBorderColor, rgba(150, 150, 150, 0.4));
-    border-radius: 6px;
-    background: var(--SmartThemeQuoteColor, rgba(110, 110, 110, 0.18));
-    color: var(--SmartThemeBodyColor, inherit);
-    font: inherit;
+.ooca-title-group {
+    min-width: 0;
+}
+
+.ooca-title {
+    color: #D6BD8A;
+    font-size: 14px;
     font-weight: 600;
-    line-height: 1.2;
+}
+
+.ooca-subtitle {
+    margin-top: 2px;
+    color: #9299A6;
+    font-size: 10px;
+}
+
+.ooca-header-buttons {
+    display: flex;
+    flex-shrink: 0;
+    gap: 5px;
+}
+
+.ooca-icon-button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: #343943;
+    color: #D9DDE5;
+    font-size: 17px;
     cursor: pointer;
-    transition: background 120ms ease, border-color 120ms ease;
 }
 
-.ui-enhancements-button:hover {
-    background: var(--SmartThemeEmColor, rgba(150, 150, 150, 0.25));
-    border-color: var(--SmartThemeBodyColor, rgba(180, 180, 180, 0.65));
+.ooca-icon-button:hover {
+    background: #4A505C;
 }
 
-.ui-enhancements-button:focus-visible {
-    outline: 2px solid var(--SmartThemeEmColor, currentColor);
-    outline-offset: 2px;
+.ooca-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.ooca-question-view,
+.ooca-answer-view {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.ooca-label {
+    color: #D6BD8A;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.ooca-input {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    padding: 10px 12px;
+    border: 1px solid #343943;
+    border-radius: 8px;
+    outline: none;
+    background: #202329;
+    color: #E1E4EA;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.ooca-input:focus {
+    border-color: #9299A6;
+}
+
+.ooca-input::placeholder {
+    color: #747C89;
+}
+
+.ooca-hint {
+    color: #747C89;
+    font-size: 10px;
+    line-height: 1.5;
+}
+
+.ooca-primary-button,
+.ooca-secondary-button {
+    padding: 7px 12px;
+    border: 1px solid #343943;
+    border-radius: 7px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.ooca-primary-button {
+    align-self: flex-end;
+    background: #D6BD8A;
+    border-color: #D6BD8A;
+    color: #25221C;
+    font-weight: 600;
+}
+
+.ooca-primary-button:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+
+.ooca-secondary-button {
+    background: #292D35;
+    color: #C4C9D2;
+}
+
+.ooca-answer-output {
+    min-height: 100px;
+    max-height: min(42dvh, 360px);
+    padding: 11px 12px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    background: #202329;
+    border: 1px solid #343943;
+    border-radius: 8px;
+    color: #D9DDE5;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.ooca-answer-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.ooca-body,
+.ooca-answer-output {
+    scrollbar-width: thin;
+    scrollbar-color: #555D69 transparent;
+}
+
+@media (max-width: 600px) {
+    .ooca-launcher {
+        right: 14px;
+        bottom: 85px;
+        width: 46px;
+        height: 46px;
+    }
+
+    .ooca-panel {
+        width: min(370px, calc(100vw - 20px));
+        max-height: calc(100dvh - 20px);
+        border-radius: 11px;
+    }
+
+    .ooca-body {
+        padding: 11px;
+    }
+
+    .ooca-answer-output {
+        max-height: 38dvh;
+    }
+}
+
+@media (max-width: 380px) {
+    .ooca-panel {
+        width: calc(100vw - 16px);
+        max-width: none;
+    }
+
+    .ooca-header {
+        padding: 10px;
+    }
+
+    .ooca-answer-actions {
+        gap: 5px;
+    }
 }
